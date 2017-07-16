@@ -5,6 +5,10 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -26,7 +30,9 @@ public class MainWindow extends JFrame {
 
 	private JPanel contentPane;
 	private final JFrame windowInstance = this;
+	JComboBox comboBox;
 	ExcelHandler handler;
+	
 	Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
 	private KeyListener kl = new KeyListener(){
 		@Override
@@ -46,6 +52,41 @@ public class MainWindow extends JFrame {
 				dialog.setVisible(true);
 			}
 		}
+	};
+	
+	private KeyListener enter = new KeyListener(){
+
+		@Override
+		public void keyTyped(KeyEvent e) {
+			if(e.getKeyCode() == KeyEvent.VK_ESCAPE){
+				ConfirmExit dialog = new ConfirmExit(windowInstance);
+				int x = (int) ((dimension.getWidth() - dialog.getWidth()) / 2);
+				int y = (int) ((dimension.getHeight() - dialog.getHeight()) / 2);
+				dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+				dialog.setResizable(false);
+				dialog.setLocation(x, y);
+				dialog.setVisible(true);
+			}
+			else if(e.getKeyCode() == KeyEvent.VK_ENTER){
+				if(comboBox.getSelectedItem() != null){
+					handler.register(comboBox.getSelectedItem().toString());
+					comboBox.setSelectedIndex(0);
+				}	
+			}
+		}
+
+		@Override
+		public void keyPressed(KeyEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void keyReleased(KeyEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+		
 	};
 	/**
 	 * Launch the application.
@@ -88,9 +129,10 @@ public class MainWindow extends JFrame {
 		panel.add(panel_1);
 		panel_1.setLayout(new BorderLayout(0, 0));
 		
-		JComboBox comboBox = new JComboBox();
+		comboBox = new JComboBox();
 		AutoCompleteSupport.install(comboBox, GlazedLists.eventListOf(handler.names.toArray()));
 		comboBox.setEditable(true);
+		comboBox.addKeyListener(enter);
 		panel_1.add(comboBox, BorderLayout.NORTH);
 		
 		JPanel panel_2 = new JPanel();
@@ -107,10 +149,89 @@ public class MainWindow extends JFrame {
 		setExtendedState(JFrame.MAXIMIZED_BOTH);
 		setUndecorated(true);
 		setVisible(true);
+		btnEnter.addKeyListener(enter);
+		btnEnter.addMouseListener(new MouseListener(){
+
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if(comboBox.getSelectedItem() != null){
+					handler.register(comboBox.getSelectedItem().toString());
+					comboBox.setSelectedItem(null);
+				}	
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+		});
 		
 		contentPane.setFocusable(true);
 		contentPane.addKeyListener(kl);
 		this.addKeyListener(kl);
-		
+		this.addWindowListener(new WindowListener(){
+
+			@Override
+			public void windowOpened(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void windowClosing(WindowEvent e) {
+				handler.exportData();
+			}
+
+			@Override
+			public void windowClosed(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void windowIconified(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void windowDeiconified(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void windowActivated(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void windowDeactivated(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+		});
 	}
 }

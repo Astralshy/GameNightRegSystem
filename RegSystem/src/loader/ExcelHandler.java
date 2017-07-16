@@ -5,7 +5,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -21,11 +25,12 @@ public class ExcelHandler {
 	
 	ArrayList<HashMap<String, String>> entries = new ArrayList<HashMap<String,String>>();
 	public ArrayList<Object> names = new ArrayList<Object>();
-	
+	ArrayList<String[]> registry = new ArrayList<String[]>();
 	
 	
 	public ExcelHandler(){
 		importData();
+		registry.add(new String[]{"Name","Time"});
 	}
 	
 	
@@ -52,17 +57,17 @@ public class ExcelHandler {
 					cellNum++;
 					
 				}
-				System.out.println();
 				if(list[3] == null){
 					list[3] = list[2];
 				}
-				HashMap<String,String> entry = new HashMap<String,String>();
-				System.out.println(list[2] + " " + list[0]);
-				entry.put("full_name", list[2] + " " + list[0]);
-				entry.put("nickname", list[3]);
-				
-				names.add(entry.get("full_name"));
-				entries.add(entry);
+				if(!list[0].equals("Last Name")){
+					HashMap<String,String> entry = new HashMap<String,String>();
+					entry.put("full_name", list[2] + " " + list[0]);
+					entry.put("nickname", list[3]);
+					
+					names.add(entry.get("full_name"));
+					entries.add(entry);
+				}
 				
 			}
 			
@@ -73,45 +78,56 @@ public class ExcelHandler {
 		}
 	}
 	
+	public void register(String name){
+		
+		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		Date date = new Date();
+		
+		String[] input = new String[2];
+		input[0] = name;
+		input[1] = dateFormat.format(date);
+		
+		registry.add(input);
+		
+	}
 	
+	public String getNicknameForName(String name){
+		
+		for(HashMap<String,String> hm: entries){
+			if(hm.containsValue(name)){
+				return hm.get("nickname");
+			}
+		}
+		return "";
+		
+	}
 	
 	public void exportData(){
 		XSSFWorkbook workbook = new XSSFWorkbook();
 		
 		XSSFSheet sheet = workbook.createSheet("test");
 
-		Map<String, Object[]> data = new TreeMap<String, Object[]>();
-		data.put("1", new Object[] {"ID", "NAME", "LASTNAME"});
-		data.put("2", new Object[] {1, "Amit", "Shukla"});
-		data.put("3", new Object[] {2, "Lokesh", "Gupta"});
-		data.put("4", new Object[] {3, "John", "Adwards"});
-		data.put("5", new Object[] {4, "Brian", "Schultz"});
 		  
 		//Iterate over data and write to sheet
-		Set<String> keyset = data.keySet();
 		int rownum = 0;
-		for (String key : keyset)
+		for (String[] list : registry)
 		{
 		    Row row = sheet.createRow(rownum++);
-		    Object [] objArr = data.get(key);
 		    int cellnum = 0;
-		    for (Object obj : objArr)
+		    for (String s : list)
 		    {
 		       Cell cell = row.createCell(cellnum++);
-		       if(obj instanceof String)
-		            cell.setCellValue((String)obj);
-		        else if(obj instanceof Integer)
-		            cell.setCellValue((Integer)obj);
+		       cell.setCellValue(s);
 		    }
 		}
 		try
 		{
 		    //Write the workbook in file system
-		    FileOutputStream out = new FileOutputStream(new File("howtodoinjava_demo.xlsx"));
+		    FileOutputStream out = new FileOutputStream(new File("registration.xlsx"));
 		    workbook.write(out);
 		    workbook.close();
 		    out.close();
-		    System.out.println("howtodoinjava_demo.xlsx written successfully on disk.");
+		    System.out.println("Output written successfully on disk.");
 		} 
 		catch (Exception e) 
 		{
