@@ -9,6 +9,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -23,8 +26,15 @@ import javax.swing.JTextField;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
 
+import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+
+import javax.swing.UIManager;
+import java.awt.FlowLayout;
 
 public class MainWindow extends JFrame {
 
@@ -58,6 +68,11 @@ public class MainWindow extends JFrame {
 
 		@Override
 		public void keyTyped(KeyEvent e) {
+			
+		}
+
+		@Override
+		public void keyPressed(KeyEvent e) {
 			if(e.getKeyCode() == KeyEvent.VK_ESCAPE){
 				ConfirmExit dialog = new ConfirmExit(windowInstance);
 				int x = (int) ((dimension.getWidth() - dialog.getWidth()) / 2);
@@ -70,15 +85,16 @@ public class MainWindow extends JFrame {
 			else if(e.getKeyCode() == KeyEvent.VK_ENTER){
 				if(comboBox.getSelectedItem() != null){
 					handler.register(comboBox.getSelectedItem().toString());
-					comboBox.setSelectedIndex(0);
+					RegisterDialog dialog = new RegisterDialog(handler, comboBox.getSelectedItem().toString());
+					int x = (int) ((dimension.getWidth() - dialog.getWidth()) / 2);
+					int y = (int) ((dimension.getHeight() - dialog.getHeight()) / 2);
+					dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+					dialog.setResizable(false);
+					dialog.setLocation(x, y);
+					dialog.setVisible(true);
+					comboBox.setSelectedItem(null);
 				}	
 			}
-		}
-
-		@Override
-		public void keyPressed(KeyEvent e) {
-			// TODO Auto-generated method stub
-			
 		}
 
 		@Override
@@ -107,14 +123,14 @@ public class MainWindow extends JFrame {
 	/**
 	 * Create the frame.
 	 */
-	public MainWindow() {
+	public MainWindow(){
 		handler = new ExcelHandler();
 		Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
 		int x = (int) ((dimension.getWidth() - 440) / 2);
 		int y = (int) ((dimension.getHeight() - 30) / 2);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
-		contentPane = new JPanel();
+		contentPane = new PanelWithBG();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
@@ -125,30 +141,23 @@ public class MainWindow extends JFrame {
 		panel.addKeyListener(kl);
 		panel.setLayout(new GridLayout(0, 2, 0, 0));
 		
-		JPanel panel_1 = new JPanel();
-		panel.add(panel_1);
-		panel_1.setLayout(new BorderLayout(0, 0));
-		
 		comboBox = new JComboBox();
+		panel.add(comboBox);
+		panel.setOpaque(false);
+		comboBox.setFont(new Font("Liberation Sans", Font.PLAIN, 13));
+		
 		AutoCompleteSupport.install(comboBox, GlazedLists.eventListOf(handler.names.toArray()));
 		comboBox.setEditable(true);
-		comboBox.addKeyListener(enter);
-		panel_1.add(comboBox, BorderLayout.NORTH);
 		
-		JPanel panel_2 = new JPanel();
-		panel.add(panel_2);
-		panel_2.addKeyListener(kl);
-		panel_2.setLayout(new GridLayout(0, 2, 0, 0));
-		
-		JPanel panel_3 = new JPanel();
-		panel_3.addKeyListener(kl);
-		panel_2.add(panel_3);
+		JPanel panel_1 = new JPanel();
+		panel.add(panel_1);
+		panel_1.setBorder(new EmptyBorder(2,10,2,10));
+		panel_1.setOpaque(false);
+		panel_1.setLayout(new BorderLayout(0, 0));
 		
 		JButton btnEnter = new JButton("Enter");
-		panel_2.add(btnEnter);
-		setExtendedState(JFrame.MAXIMIZED_BOTH);
-		setUndecorated(true);
-		setVisible(true);
+		panel_1.add(btnEnter);
+		btnEnter.setToolTipText("Click to register");
 		btnEnter.addKeyListener(enter);
 		btnEnter.addMouseListener(new MouseListener(){
 
@@ -156,6 +165,13 @@ public class MainWindow extends JFrame {
 			public void mouseClicked(MouseEvent e) {
 				if(comboBox.getSelectedItem() != null){
 					handler.register(comboBox.getSelectedItem().toString());
+					RegisterDialog dialog = new RegisterDialog(handler, comboBox.getSelectedItem().toString());
+					int x = (int) ((dimension.getWidth() - dialog.getWidth()) / 2);
+					int y = (int) ((dimension.getHeight() - dialog.getHeight()) / 2);
+					dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+					dialog.setResizable(false);
+					dialog.setLocation(x, y);
+					dialog.setVisible(true);
 					comboBox.setSelectedItem(null);
 				}	
 			}
@@ -185,6 +201,10 @@ public class MainWindow extends JFrame {
 			}
 			
 		});
+		comboBox.addKeyListener(enter);
+		setExtendedState(JFrame.MAXIMIZED_BOTH);
+		setUndecorated(true);
+		setVisible(true);
 		
 		contentPane.setFocusable(true);
 		contentPane.addKeyListener(kl);
@@ -204,8 +224,7 @@ public class MainWindow extends JFrame {
 
 			@Override
 			public void windowClosed(WindowEvent e) {
-				// TODO Auto-generated method stub
-				
+				handler.exportData();
 			}
 
 			@Override
@@ -233,5 +252,65 @@ public class MainWindow extends JFrame {
 			}
 			
 		});
+	
+		repaint();
+		Thread t = new Thread(new Runnable(){
+
+			@Override
+			public void run() {
+				contentPane.repaint();
+				
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			
+		});
+		t.start();
+	}
+	
+	
+	
+	
+	class PanelWithBG extends JPanel{
+		
+		@Override
+		public void paintComponent(Graphics g){
+			super.paintComponent(g);
+			try {
+				BufferedImage img = ImageIO.read(new File("data/bg.png"));
+				Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
+				img = scale(img,dimension.width,dimension.height);
+				g.drawImage(img, 0, 0, null);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			
+		}
+		
+		public BufferedImage scale(BufferedImage src, int w, int h)
+		{
+		    BufferedImage img = 
+		            new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+		    int x, y;
+		    int ww = src.getWidth();
+		    int hh = src.getHeight();
+		    int[] ys = new int[h];
+		    for (y = 0; y < h; y++)
+		        ys[y] = y * hh / h;
+		    for (x = 0; x < w; x++) {
+		        int newX = x * ww / w;
+		        for (y = 0; y < h; y++) {
+		            int col = src.getRGB(newX, ys[y]);
+		            img.setRGB(x, y, col);
+		        }
+		    }
+		    return img;
+		}
+		
 	}
 }
